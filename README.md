@@ -7,3 +7,5 @@
 # Why?
  - I wanted to emulate the NES system
  - Also its the 50th Anniversary!!
+# TODO
+ - For future i could make multi-system 
