@@ -66,6 +66,14 @@ void execute(int cycles, CPU *cpu, MEM *mem) {
                              cpu->A = read_byte(&cycles, address, mem);
                              LDA_set_status(cpu);
                          }
+            case ZPX_LDA: {
+                              Byte address = fetch_byte(&cycles, cpu, mem);
+                              address += cpu->X;
+                              cycles--; // Takes 1 cycle to add X reg
+                              cpu->A = read_byte(&cycles, address, mem);
+                              LDA_set_status(cpu);
+                          }
+
             default: {
                          printf("Not handle %d\n", ins);
                      } break;
@@ -82,10 +90,11 @@ int main(int argc, char* argv[]) {
     CPU cpu;
     reset(&cpu, &mem);
     int cycles = 2;
-    mem.data[0xFFFC] = ZP_LDA;
-    mem.data[0xFFFD] = 0x42;
-    mem.data[0x0042] = 0x69;
-    execute(3, &cpu, &mem);
+    cpu.X = 0x0F;
+    mem.data[0xFFFC] = ZPX_LDA;
+    mem.data[0xFFFD] = 0x80;
+    mem.data[0x008F] = 0x44;
+    execute(4, &cpu, &mem);
     printf("A: %X P: %X PC: %X, SP: %X\n",cpu.A, cpu.P, cpu.PC, cpu.SP);
     return 0;
 }
