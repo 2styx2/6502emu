@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "instructions.h"
 
 typedef unsigned char Byte;
 typedef unsigned short Word;
@@ -37,9 +38,42 @@ Byte fetch_byte(int *cyc, CPU *cpu, MEM *mem) {
     return data;
 }
 
+Byte read_byte(int *cyc, Byte address, MEM *mem) {
+    Byte data = mem->data[address];
+    *cyc -= 1;
+    return data;
+}
+
+void LDA_set_status(CPU *cpu) {
+    if (cpu->A == 0) {
+        cpu->P |= 0b00000010;
+    }
+    if (cpu->A & 0b10000000) {
+        cpu->P |= 0b10000000;
+    }
+}
 void execute(int cycles, CPU *cpu, MEM *mem) {
     while (cycles > 0) {
         Byte ins = fetch_byte(&cycles, cpu, mem);
+        switch (ins) {
+            case IM_LDA: {
+                             Byte val = fetch_byte(&cycles, cpu, mem);
+                             cpu->A = val;
+                             LDA_set_status(cpu);
+                         }
+            case ZP_LDA: {
+                             Byte address = fetch_byte(&cycles, cpu, mem);
+                             cpu->A = read_byte(&cycles, address, mem);
+                             LDA_set_status(cpu);
+                         }
+            default: {
+                         printf("Not handle %d\n", ins);
+                     } break;
+
+        }
+        if (cycles < 0) {
+            printf("Failed no more cycles, c = %d\n", cycles);
+        }
     }
 }
 
@@ -48,8 +82,11 @@ int main(int argc, char* argv[]) {
     CPU cpu;
     reset(&cpu, &mem);
     int cycles = 2;
-    execute(2, &cpu, &mem);
-    printf("PC: %X, SP: %X\n", cpu.PC, cpu.SP);
+    mem.data[0xFFFC] = ZP_LDA;
+    mem.data[0xFFFD] = 0x42;
+    mem.data[0x0042] = 0x69;
+    execute(3, &cpu, &mem);
+    printf("A: %X P: %X PC: %X, SP: %X\n",cpu.A, cpu.P, cpu.PC, cpu.SP);
     return 0;
 }
 
