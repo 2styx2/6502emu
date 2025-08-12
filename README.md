@@ -11,3 +11,4 @@
 # TODO
  - For future i could make multi-system 
  - Add unit test 
+ - Maybe create a debug mode to see value of certain parts of mem
