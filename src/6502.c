@@ -38,13 +38,26 @@ Byte read_byte(int *cyc, Byte address, MEM *mem) {
     return data;
 }
 
-void write_word_stack(int *cyc,CPU *cpu, MEM *mem, Word data) {
+Byte read_word(int *cyc, Word address, MEM *mem) {
+    Byte data = mem->data[address];
+    *cyc -= 1;
+    return data;
+}
+
+void write_word_stack(int *cyc, CPU *cpu, MEM *mem, Word data) {
     mem->data[0x0100 + cpu->SP] = data & 0xFF;
     cpu->SP--;
     mem->data[0x0100 + cpu->SP] = (data >> 8);
     cpu->SP--;
     *cyc -= 2;
 }
+
+void write_byte_stack(int *cyc, CPU *cpu, MEM *mem, Byte data) {
+    mem->data[0x0100 + cpu->SP] = data;
+    cpu->SP--;
+    *cyc -= 1;
+}
+
 
 void LDA_set_status(CPU *cpu) {
     if (cpu->A == 0) {
@@ -75,13 +88,29 @@ void execute(int cycles, CPU *cpu, MEM *mem) {
                               cpu->A = read_byte(&cycles, address, mem);
                               LDA_set_status(cpu);
                           } break;
-            case JSR: {
-                        Word address = fetch_word(&cycles, cpu, mem);
-                        write_word_stack(&cycles, cpu, mem, cpu->PC - 1);
-                        cpu->PC = address;
-                        cycles--;
-                      } break;
+            case AB_LDA: {
+                             Word address = fetch_word(&cycles, cpu, mem);
+                             cpu->A = read_word(&cycles, address, mem);
+                             LDA_set_status(cpu);
+                         } break;
 
+            case JSR: {
+                          Word address = fetch_word(&cycles, cpu, mem);
+                          write_word_stack(&cycles, cpu, mem, cpu->PC - 1);
+                          cpu->PC = address;
+                          cycles--;
+                      } break;
+            case IMP_BRK: {
+                              fetch_byte(&cycles, cpu, mem); // This is a 2 byte ins just fetching the paddding
+                              write_word_stack(&cycles, cpu, mem, cpu->PC);
+                              cpu->P |= 0b00010000;
+                              write_byte_stack(&cycles, cpu, mem, cpu->P);
+                              Word address = 0xFFFE;
+                              cpu->PC = (Word) read_word(&cycles, address, mem);
+                              address = 0xFFFF;
+                              cpu->PC = ((Word) read_word(&cycles, address, mem)) << 8;
+
+                          } break;
             default: {
                          printf("Not handle %d\n", ins);
                      } break;

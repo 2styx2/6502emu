@@ -1,11 +1,7 @@
-CC       = gcc
-CFLAGS   = -Wall -Wextra -std=c99 -I$(SRC_DIR) -I$(UNITY_DIR)
+CC       = gcc                     
+# -I{*} adds list of dirs to be searched
+CFLAGS   = -g -O0 -DDEBUG -Wall -Wextra -std=c99 -I$(SRC_DIR) -I$(UNITY_DIR)
 LDFLAGS  =
-
-# Turn on debug flags with: make DEBUG=1
-ifeq ($(DEBUG),1)
-CFLAGS  += -g -O0 -DDEBUG
-endif
 
 SRC_DIR  = src
 BIN_DIR  = bin
@@ -23,7 +19,7 @@ TARGET = $(BIN_DIR)/main
 
 # --- Unity auto-fetch ---
 UNITY_DIR      = deps/unity
-UNITY_VER      = v2.6.0
+UNITY_VER      = v2.6.1
 UNITY_URL_BASE = https://raw.githubusercontent.com/ThrowTheSwitch/Unity/$(UNITY_VER)/src
 
 UNITY_SRC      = $(UNITY_DIR)/unity.c
